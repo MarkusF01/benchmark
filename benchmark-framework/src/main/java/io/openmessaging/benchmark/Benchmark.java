@@ -176,7 +176,7 @@ public class Benchmark {
 
                                     String fileName =
                                             useOutput
-                                                    ? arguments.output
+                                                    ? arguments.output + workloadName + "_" + driverConfiguration.name + ".json"
                                                     : String.format(
                                                             "%s-%s-%s.json",
                                                             workloadName,

@@ -395,39 +395,8 @@ public class WorkloadGenerator implements AutoCloseable {
             result.publishErrorRate.add(errorRate);
             result.consumeRate.add(consumeRate);
             result.backlog.add(currentBacklog);
-            result.publishLatencyAvg.add(microsToMillis(stats.publishLatency.getMean()));
-            result.publishLatency50pct.add(microsToMillis(stats.publishLatency.getValueAtPercentile(50)));
-            result.publishLatency75pct.add(microsToMillis(stats.publishLatency.getValueAtPercentile(75)));
-            result.publishLatency95pct.add(microsToMillis(stats.publishLatency.getValueAtPercentile(95)));
-            result.publishLatency99pct.add(microsToMillis(stats.publishLatency.getValueAtPercentile(99)));
-            result.publishLatency999pct.add(
-                    microsToMillis(stats.publishLatency.getValueAtPercentile(99.9)));
-            result.publishLatency9999pct.add(
-                    microsToMillis(stats.publishLatency.getValueAtPercentile(99.99)));
-            result.publishLatencyMax.add(microsToMillis(stats.publishLatency.getMaxValue()));
-
-            result.publishDelayLatencyAvg.add(stats.publishDelayLatency.getMean());
-            result.publishDelayLatency50pct.add(stats.publishDelayLatency.getValueAtPercentile(50));
-            result.publishDelayLatency75pct.add(stats.publishDelayLatency.getValueAtPercentile(75));
-            result.publishDelayLatency95pct.add(stats.publishDelayLatency.getValueAtPercentile(95));
-            result.publishDelayLatency99pct.add(stats.publishDelayLatency.getValueAtPercentile(99));
-            result.publishDelayLatency999pct.add(stats.publishDelayLatency.getValueAtPercentile(99.9));
-            result.publishDelayLatency9999pct.add(stats.publishDelayLatency.getValueAtPercentile(99.99));
-            result.publishDelayLatencyMax.add(stats.publishDelayLatency.getMaxValue());
 
             result.endToEndLatencyAvg.add(microsToMillis(stats.endToEndLatency.getMean()));
-            result.endToEndLatency50pct.add(
-                    microsToMillis(stats.endToEndLatency.getValueAtPercentile(50)));
-            result.endToEndLatency75pct.add(
-                    microsToMillis(stats.endToEndLatency.getValueAtPercentile(75)));
-            result.endToEndLatency95pct.add(
-                    microsToMillis(stats.endToEndLatency.getValueAtPercentile(95)));
-            result.endToEndLatency99pct.add(
-                    microsToMillis(stats.endToEndLatency.getValueAtPercentile(99)));
-            result.endToEndLatency999pct.add(
-                    microsToMillis(stats.endToEndLatency.getValueAtPercentile(99.9)));
-            result.endToEndLatency9999pct.add(
-                    microsToMillis(stats.endToEndLatency.getValueAtPercentile(99.99)));
             result.endToEndLatencyMax.add(microsToMillis(stats.endToEndLatency.getMaxValue()));
 
             if (now >= testEndTime && !needToWaitForBacklogDraining) {
@@ -448,72 +417,6 @@ public class WorkloadGenerator implements AutoCloseable {
                         dec.format(agg.publishDelayLatency.getValueAtPercentile(99.9)),
                         dec.format(agg.publishDelayLatency.getValueAtPercentile(99.99)),
                         throughputFormat.format(agg.publishDelayLatency.getMaxValue()));
-
-                result.aggregatedPublishLatencyAvg = agg.publishLatency.getMean() / 1000.0;
-                result.aggregatedPublishLatency50pct = agg.publishLatency.getValueAtPercentile(50) / 1000.0;
-                result.aggregatedPublishLatency75pct = agg.publishLatency.getValueAtPercentile(75) / 1000.0;
-                result.aggregatedPublishLatency95pct = agg.publishLatency.getValueAtPercentile(95) / 1000.0;
-                result.aggregatedPublishLatency99pct = agg.publishLatency.getValueAtPercentile(99) / 1000.0;
-                result.aggregatedPublishLatency999pct =
-                        agg.publishLatency.getValueAtPercentile(99.9) / 1000.0;
-                result.aggregatedPublishLatency9999pct =
-                        agg.publishLatency.getValueAtPercentile(99.99) / 1000.0;
-                result.aggregatedPublishLatencyMax = agg.publishLatency.getMaxValue() / 1000.0;
-
-                result.aggregatedPublishDelayLatencyAvg = agg.publishDelayLatency.getMean();
-                result.aggregatedPublishDelayLatency50pct =
-                        agg.publishDelayLatency.getValueAtPercentile(50);
-                result.aggregatedPublishDelayLatency75pct =
-                        agg.publishDelayLatency.getValueAtPercentile(75);
-                result.aggregatedPublishDelayLatency95pct =
-                        agg.publishDelayLatency.getValueAtPercentile(95);
-                result.aggregatedPublishDelayLatency99pct =
-                        agg.publishDelayLatency.getValueAtPercentile(99);
-                result.aggregatedPublishDelayLatency999pct =
-                        agg.publishDelayLatency.getValueAtPercentile(99.9);
-                result.aggregatedPublishDelayLatency9999pct =
-                        agg.publishDelayLatency.getValueAtPercentile(99.99);
-                result.aggregatedPublishDelayLatencyMax = agg.publishDelayLatency.getMaxValue();
-
-                result.aggregatedEndToEndLatencyAvg = agg.endToEndLatency.getMean() / 1000.0;
-                result.aggregatedEndToEndLatency50pct =
-                        agg.endToEndLatency.getValueAtPercentile(50) / 1000.0;
-                result.aggregatedEndToEndLatency75pct =
-                        agg.endToEndLatency.getValueAtPercentile(75) / 1000.0;
-                result.aggregatedEndToEndLatency95pct =
-                        agg.endToEndLatency.getValueAtPercentile(95) / 1000.0;
-                result.aggregatedEndToEndLatency99pct =
-                        agg.endToEndLatency.getValueAtPercentile(99) / 1000.0;
-                result.aggregatedEndToEndLatency999pct =
-                        agg.endToEndLatency.getValueAtPercentile(99.9) / 1000.0;
-                result.aggregatedEndToEndLatency9999pct =
-                        agg.endToEndLatency.getValueAtPercentile(99.99) / 1000.0;
-                result.aggregatedEndToEndLatencyMax = agg.endToEndLatency.getMaxValue() / 1000.0;
-
-                agg.publishLatency
-                        .percentiles(100)
-                        .forEach(
-                                value -> {
-                                    result.aggregatedPublishLatencyQuantiles.put(
-                                            value.getPercentile(), value.getValueIteratedTo() / 1000.0);
-                                });
-
-                agg.publishDelayLatency
-                        .percentiles(100)
-                        .forEach(
-                                value -> {
-                                    result.aggregatedPublishDelayLatencyQuantiles.put(
-                                            value.getPercentile(), value.getValueIteratedTo());
-                                });
-
-                agg.endToEndLatency
-                        .percentiles(100)
-                        .forEach(
-                                value -> {
-                                    result.aggregatedEndToEndLatencyQuantiles.put(
-                                            value.getPercentile(), microsToMillis(value.getValueIteratedTo()));
-                                });
-
                 break;
             }
 

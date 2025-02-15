@@ -29,10 +29,8 @@ import io.openmessaging.benchmark.worker.Worker;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,7 +174,8 @@ public class Benchmark {
 
                                     String fileName =
                                             useOutput
-                                                    ? arguments.output + workloadName + "_" + driverConfiguration.name + ".json"
+                                                    ? arguments.output +
+                                                    workloadName + "_" + driverConfiguration.name + ".json"
                                                     : String.format(
                                                             "%s-%s-%s.json",
                                                             workloadName,

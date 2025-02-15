@@ -16,8 +16,6 @@ package io.openmessaging.benchmark;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class TestResult {
     public String workload;

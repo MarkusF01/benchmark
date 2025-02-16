@@ -13,8 +13,13 @@
  */
 package io.openmessaging.benchmark;
 
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class DriverConfiguration {
     public String name;
-
     public String driverClass;
+    public List<String> amqpUris = new ArrayList<>();
+    public String commonConfig;
 }

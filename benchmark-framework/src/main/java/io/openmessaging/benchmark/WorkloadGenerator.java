@@ -15,6 +15,9 @@ package io.openmessaging.benchmark;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.openmessaging.benchmark.utils.PaddingDecimalFormat;
 import io.openmessaging.benchmark.utils.RandomGenerator;
@@ -35,10 +38,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang.ArrayUtils;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.Dsl;
+import org.asynchttpclient.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +55,7 @@ public class WorkloadGenerator implements AutoCloseable {
     private final String driverName;
     private final Workload workload;
     private final Worker worker;
+    private final String brokerBasePath;
 
     private final ExecutorService executor =
             Executors.newCachedThreadPool(new DefaultThreadFactory("messaging-benchmark"));
@@ -56,10 +65,12 @@ public class WorkloadGenerator implements AutoCloseable {
 
     private volatile double targetPublishRate;
 
-    public WorkloadGenerator(String driverName, Workload workload, Worker worker) {
+    public WorkloadGenerator(
+            String driverName, Workload workload, Worker worker, String brokerBasePath) {
         this.driverName = driverName;
         this.workload = workload;
         this.worker = worker;
+        this.brokerBasePath = brokerBasePath;
 
         if (workload.consumerBacklogSizeGB > 0 && workload.producerRate == 0) {
             throw new IllegalArgumentException(
@@ -330,11 +341,15 @@ public class WorkloadGenerator implements AutoCloseable {
     }
 
     @SuppressWarnings({"checkstyle:LineLength", "checkstyle:MethodLength"})
-    private TestResult printAndCollectStats(long testDurations, TimeUnit unit) throws IOException {
+    private TestResult printAndCollectStats(long testDurations, TimeUnit unit)
+            throws IOException, ExecutionException, InterruptedException {
         long startTime = System.nanoTime();
 
         // Print report stats
         long oldTime = System.nanoTime();
+
+        // start tracking system resources
+        sendHttpRequest(Dsl.asyncHttpClient(), brokerBasePath + ":5000/start");
 
         long testEndTime = testDurations > 0 ? startTime + unit.toNanos(testDurations) : Long.MAX_VALUE;
 
@@ -423,7 +438,34 @@ public class WorkloadGenerator implements AutoCloseable {
             oldTime = now;
         }
 
+        // stop tracking system resources
+        String jsonResponse = sendHttpRequest(Dsl.asyncHttpClient(), brokerBasePath + "/stop").get();
+
+        parseTrackingData(jsonResponse, result);
+
         return result;
+    }
+
+    private CompletableFuture<String> sendHttpRequest(AsyncHttpClient client, String url) {
+        return client
+                .prepareGet(url)
+                .execute()
+                .toCompletableFuture()
+                .thenApply(Response::getResponseBody);
+    }
+
+    private void parseTrackingData(String jsonResponse, TestResult result)
+            throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+        JsonNode dataArray = rootNode.get("data");
+
+        if (dataArray.isArray()) {
+            for (JsonNode entry : dataArray) {
+                result.cpuUsage.add(entry.get("cpu").asDouble());
+                result.memoryUsage.add(entry.get("memory").asDouble());
+            }
+        }
     }
 
     private static final DecimalFormat rateFormat = new PaddingDecimalFormat("0.0", 7);

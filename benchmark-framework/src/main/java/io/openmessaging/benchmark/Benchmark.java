@@ -27,10 +27,14 @@ import io.openmessaging.benchmark.worker.HttpWorkerClient;
 import io.openmessaging.benchmark.worker.LocalWorker;
 import io.openmessaging.benchmark.worker.Worker;
 import java.io.File;
+import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
-
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,6 +159,25 @@ public class Benchmark {
                                     File driverConfigFile = new File(driverConfig);
                                     DriverConfiguration driverConfiguration =
                                             mapper.readValue(driverConfigFile, DriverConfiguration.class);
+
+                                    // added so that the uri of the broker can be given to the workload generator
+                                    // to start the measuring of the system resources
+                                    String brokerBasePath;
+                                    if (!driverConfiguration.amqpUris.isEmpty()) {
+                                        // amqp://bsc:arbeit@localhost:5672
+                                        String baseUri = driverConfiguration.amqpUris.get(0).split("//")[1];
+                                        if (baseUri.contains("@")) {
+                                            baseUri = baseUri.split("@")[1];
+                                        }
+                                        brokerBasePath = baseUri.split(":")[0];
+                                    } else {
+                                        //   bootstrap.servers=localhost:9092
+                                        Properties commonProperties = new Properties();
+                                        commonProperties.load(new StringReader(driverConfiguration.commonConfig));
+                                        brokerBasePath =
+                                                commonProperties.getProperty("bootstrap.servers").split(":")[0];
+                                    }
+
                                     log.info(
                                             "--------------- WORKLOAD : {} --- DRIVER : {}---------------",
                                             workload.name,
@@ -166,7 +189,8 @@ public class Benchmark {
                                     worker.initializeDriver(new File(driverConfig));
 
                                     WorkloadGenerator generator =
-                                            new WorkloadGenerator(driverConfiguration.name, workload, worker);
+                                            new WorkloadGenerator(
+                                                    driverConfiguration.name, workload, worker, brokerBasePath);
 
                                     TestResult result = generator.run();
 
@@ -175,6 +199,7 @@ public class Benchmark {
                                     String fileName =
                                             useOutput
                                                     ? arguments.output
+                                                            + "_"
                                                             + workloadName
                                                             + "_"
                                                             + driverConfiguration.name

@@ -36,6 +36,9 @@ public class TestResult {
     public List<Double> endToEndLatencyAvg = new ArrayList<>();
     public List<Double> endToEndLatencyMax = new ArrayList<>();
 
+    public List<Double> cpuUsage = new ArrayList<>();
+    public List<Double> memoryUsage = new ArrayList<>();
+
     public int getTopics() {
         return topics;
     }

@@ -159,7 +159,7 @@ public class WorkloadGenerator implements AutoCloseable {
 
         // stop tracking system resources
         String jsonResponse =
-                sendHttpRequest(Dsl.asyncHttpClient(), "http://" + brokerBasePath + "/stop").get();
+                sendHttpRequest(Dsl.asyncHttpClient(), "http://" + brokerBasePath + ":5000/stop").get();
         parseTrackingData(jsonResponse, result);
 
         worker.stopAll();

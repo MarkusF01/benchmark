@@ -151,8 +151,16 @@ public class WorkloadGenerator implements AutoCloseable {
         worker.resetStats();
         log.info("----- Starting benchmark traffic ({}m)------", workload.testDurationMinutes);
 
+        // start tracking system resources
+        sendHttpRequest(Dsl.asyncHttpClient(), "http://" + brokerBasePath + ":5000/start");
+
         TestResult result = printAndCollectStats(workload.testDurationMinutes, TimeUnit.MINUTES);
         runCompleted = true;
+
+        // stop tracking system resources
+        String jsonResponse =
+                sendHttpRequest(Dsl.asyncHttpClient(), "http://" + brokerBasePath + "/stop").get();
+        parseTrackingData(jsonResponse, result);
 
         worker.stopAll();
         return result;
@@ -348,9 +356,6 @@ public class WorkloadGenerator implements AutoCloseable {
         // Print report stats
         long oldTime = System.nanoTime();
 
-        // start tracking system resources
-        sendHttpRequest(Dsl.asyncHttpClient(), brokerBasePath + ":5000/start");
-
         long testEndTime = testDurations > 0 ? startTime + unit.toNanos(testDurations) : Long.MAX_VALUE;
 
         TestResult result = new TestResult();
@@ -437,11 +442,6 @@ public class WorkloadGenerator implements AutoCloseable {
 
             oldTime = now;
         }
-
-        // stop tracking system resources
-        String jsonResponse = sendHttpRequest(Dsl.asyncHttpClient(), brokerBasePath + "/stop").get();
-
-        parseTrackingData(jsonResponse, result);
 
         return result;
     }
